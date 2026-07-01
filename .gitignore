@@ -1,0 +1,10 @@
+# Go build output
+app/hello-k8s
+*.test
+*.out
+
+# Local tooling / editor
+.DS_Store
+.idea/
+.vscode/
+kubeconfig

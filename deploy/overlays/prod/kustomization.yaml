@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Prod: multiple replicas, HPA, tighter scheduling, pinned version tag.
+namespace: hello-prod
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - hpa.yaml
+  - pdb.yaml
+
+images:
+  - name: hello-k8s
+    newTag: v1.0.0
+
+replicas:
+  - name: hello-k8s
+    count: 3
+
+patches:
+  # Version label surfaced at /version.
+  - target:
+      kind: Deployment
+      name: hello-k8s
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: VERSION
+          value: v1.0.0
+  # Spread replicas across nodes and never voluntarily evict the last pod.
+  - path: patch-deployment.yaml

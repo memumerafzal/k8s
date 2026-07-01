@@ -1,0 +1,80 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build & vet app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: app/go.mod
+      - name: go vet
+        working-directory: app
+        run: go vet ./...
+      - name: go build
+        working-directory: app
+        run: go build ./...
+      - name: docker build
+        run: docker build --build-arg VERSION=ci -t hello-k8s:ci ./app
+
+  validate:
+    name: validate manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install kubeconform
+        run: |
+          curl -sSLo /tmp/kc.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kc.tar.gz -C /tmp
+          sudo mv /tmp/kubeconform /usr/local/bin/
+      - name: kustomize build + kubeconform (dev & prod)
+        run: |
+          for o in dev prod; do
+            echo "==> $o"
+            kubectl kustomize deploy/overlays/$o \
+              | kubeconform -strict -summary \
+                  -schema-location default \
+                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+          done
+
+  e2e:
+    name: e2e on kind
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: hello-k8s
+          config: kind/cluster.yaml
+      - name: install ingress-nginx
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0/deploy/static/provider/kind/deploy.yaml
+          kubectl -n ingress-nginx wait --for=condition=Available deploy/ingress-nginx-controller --timeout=180s
+      - name: build & load image
+        run: |
+          docker build --build-arg VERSION=ci -t hello-k8s:dev ./app
+          kind load docker-image hello-k8s:dev --name hello-k8s
+      - name: deploy dev overlay
+        run: |
+          kubectl apply -k deploy/overlays/dev
+          kubectl -n hello-dev rollout status deploy/hello-k8s --timeout=120s
+      - name: smoke test through ingress
+        run: |
+          for i in $(seq 1 15); do
+            if curl -fsS http://localhost/healthz; then ok=1; break; fi
+            sleep 4
+          done
+          test "$ok" = 1
+          curl -fsS http://localhost/version

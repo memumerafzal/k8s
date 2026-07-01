@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Dev: single replica, image tag built + loaded locally into kind.
+namespace: hello-dev
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+images:
+  - name: hello-k8s
+    newTag: dev
+
+replicas:
+  - name: hello-k8s
+    count: 1
+
+# Make the running version visible at /version.
+patches:
+  - target:
+      kind: Deployment
+      name: hello-k8s
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: VERSION
+          value: dev
