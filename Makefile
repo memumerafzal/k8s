@@ -33,6 +33,18 @@ cluster:
 	@echo "waiting for the ingress controller (and its admission webhook) to be ready..."
 	@kubectl -n ingress-nginx wait --for=condition=Ready pod \
 		--selector=app.kubernetes.io/component=controller --timeout=180s
+	@echo "waiting for the admission webhook endpoint to be populated..."
+	@for i in $$(seq 1 30); do \
+		if [ -n "$$(kubectl -n ingress-nginx get endpoints ingress-nginx-controller-admission -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null)" ]; then \
+			echo "admission webhook endpoint ready"; break; \
+		fi; \
+		echo "  ...not ready yet ($$i/30)"; sleep 5; \
+	done
+
+## test: run the Go unit tests
+.PHONY: test
+test:
+	cd app && go test -race -count=1 ./...
 
 ## build: build the app image and load it into the kind cluster
 .PHONY: build

@@ -50,6 +50,47 @@ func main() {
 		"node":      env("NODE_NAME", "local"),
 	}
 
+	mux := newRouter(info)
+
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	// Simulate warm-up so the readiness probe is meaningful in a demo.
+	go func() {
+		time.Sleep(readyDelay)
+		ready.Store(true)
+		log.Printf("ready after %s warm-up", readyDelay)
+	}()
+
+	// Graceful shutdown: on SIGTERM, stop advertising readiness, give the
+	// service endpoints time to drain, then shut the server down cleanly.
+	go func() {
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+		<-stop
+		log.Println("shutdown signal received; draining")
+		ready.Store(false)
+		time.Sleep(3 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("graceful shutdown error: %v", err)
+		}
+	}()
+
+	log.Printf("hello-k8s %s listening on %s (pod=%s)", version, addr, info["pod"])
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("server error: %v", err)
+	}
+	log.Println("stopped")
+}
+
+// newRouter wires up the HTTP handlers. It is separated from main() so the
+// handlers can be exercised directly in unit tests via httptest.
+func newRouter(info map[string]string) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	// Liveness: is the process alive? Cheap and always-200 while running.
@@ -91,40 +132,7 @@ func main() {
 		})
 	})
 
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	// Simulate warm-up so the readiness probe is meaningful in a demo.
-	go func() {
-		time.Sleep(readyDelay)
-		ready.Store(true)
-		log.Printf("ready after %s warm-up", readyDelay)
-	}()
-
-	// Graceful shutdown: on SIGTERM, stop advertising readiness, give the
-	// service endpoints time to drain, then shut the server down cleanly.
-	go func() {
-		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
-		<-stop
-		log.Println("shutdown signal received; draining")
-		ready.Store(false)
-		time.Sleep(3 * time.Second)
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
-			log.Printf("graceful shutdown error: %v", err)
-		}
-	}()
-
-	log.Printf("hello-k8s %s listening on %s (pod=%s)", version, addr, info["pod"])
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server error: %v", err)
-	}
-	log.Println("stopped")
+	return mux
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

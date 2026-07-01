@@ -21,6 +21,9 @@ jobs:
       - name: go vet
         working-directory: app
         run: go vet ./...
+      - name: go test
+        working-directory: app
+        run: go test -race -count=1 ./...
       - name: go build
         working-directory: app
         run: go build ./...
@@ -61,7 +64,20 @@ jobs:
       - name: install ingress-nginx
         run: |
           kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0/deploy/static/provider/kind/deploy.yaml
-          kubectl -n ingress-nginx wait --for=condition=Available deploy/ingress-nginx-controller --timeout=180s
+          # Wait for the controller pod to be Ready (its readiness gates the webhook).
+          kubectl -n ingress-nginx wait --for=condition=Ready pod \
+            --selector=app.kubernetes.io/component=controller --timeout=180s
+          # The controller can report Ready a moment before its admission webhook
+          # endpoint is registered. Applying an Ingress in that window fails with
+          # "connection refused", so wait until the webhook endpoint has an address.
+          echo "waiting for the admission webhook endpoint to be populated..."
+          for i in $(seq 1 30); do
+            if [ -n "$(kubectl -n ingress-nginx get endpoints ingress-nginx-controller-admission \
+                 -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null)" ]; then
+              echo "admission webhook endpoint ready"; break
+            fi
+            echo "  ...not ready yet ($i/30)"; sleep 5
+          done
       - name: build & load image
         run: |
           docker build --build-arg VERSION=ci -t hello-k8s:dev ./app
