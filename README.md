@@ -115,3 +115,9 @@ make lint                  # render both overlays + validate against the k8s sch
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<p align="center">
+  Built by <strong>Umer Afzal</strong> · <a href="https://github.com/memumerafzal">@memumerafzal</a>
+</p>
