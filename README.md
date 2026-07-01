@@ -14,6 +14,20 @@ make demo    # curl the app through the Ingress
 make down    # tear it all down
 ```
 
+## Overview
+
+**What it does.** `make up` stands up a real 3-node Kubernetes cluster on your laptop with [kind](https://kind.sigs.k8s.io/), installs an nginx Ingress, builds a tiny Go web app into a container, and deploys it — reachable at `http://localhost/`. `make demo` shows it responding (which pod/node served each request, plus a request counter), and `make down` removes everything. No cloud account, no cost.
+
+**Purpose.** The app is deliberately trivial — a ~130-line Go service with `/`, `/healthz`, `/readyz`, `/version`, and `/metrics` endpoints. The app is just the vehicle; the point is *how it's packaged, deployed, and operated*. It's a compact, runnable demonstration of the production Kubernetes practices reviewers look for:
+
+| What it demonstrates | Where |
+| --- | --- |
+| **Containerization done right** | Multi-stage build → distroless, non-root (UID 65532), read-only rootfs, no shell |
+| **Environment management** | Kustomize `base` + `dev`/`prod` overlays — dev: 1 replica; prod: 3 replicas + HPA + PodDisruptionBudget + topology spread |
+| **Zero-downtime reliability** | Real liveness/readiness probes + graceful `SIGTERM` shutdown so rollouts don't drop traffic |
+| **Security by default** | Dropped Linux capabilities, seccomp `RuntimeDefault`, resource requests/limits |
+| **Automation** | One-command `make` workflow + CI that lints manifests *and* stands the whole thing up on kind to smoke-test end-to-end |
+
 ## Demo
 
 <p align="center">
