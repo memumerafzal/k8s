@@ -30,7 +30,9 @@ cluster:
 		kind create cluster --name $(CLUSTER) --config kind/cluster.yaml
 	@echo "installing ingress-nginx ($(INGRESS_NGINX_VERSION))..."
 	@kubectl apply -f $(INGRESS_MANIFEST)
-	@kubectl -n ingress-nginx wait --for=condition=Available deploy/ingress-nginx-controller --timeout=180s
+	@echo "waiting for the ingress controller (and its admission webhook) to be ready..."
+	@kubectl -n ingress-nginx wait --for=condition=Ready pod \
+		--selector=app.kubernetes.io/component=controller --timeout=180s
 
 ## build: build the app image and load it into the kind cluster
 .PHONY: build

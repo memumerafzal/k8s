@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="770" viewBox="0 0 860 770" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13.5">
+<rect x="0" y="0" width="860" height="770" rx="10" fill="#0d1117" stroke="#30363d"/>
+<rect x="0" y="0" width="860" height="34" rx="10" fill="#161b22"/>
+<rect x="0" y="20" width="860" height="14" fill="#161b22"/>
+<circle cx="20" cy="17" r="6" fill="#ff5f56"/>
+<circle cx="40" cy="17" r="6" fill="#ffbd2e"/>
+<circle cx="60" cy="17" r="6" fill="#27c93f"/>
+<text x="430" y="21" fill="#8b949e" text-anchor="middle" font-size="12">hello-k8s — make up &amp;&amp; make demo &amp;&amp; make status</text>
+<text x="22" y="52" fill="#7ee787" xml:space="preserve">$ make up</text>
+<text x="22" y="72" fill="#8b949e" xml:space="preserve">kind create cluster --name hello-k8s --config kind/cluster.yaml</text>
+<text x="22" y="92" fill="#c9d1d9" xml:space="preserve"> ✓ Ensuring node image (kindest/node) 🖼</text>
+<text x="22" y="112" fill="#c9d1d9" xml:space="preserve"> ✓ Preparing nodes 📦 📦 📦</text>
+<text x="22" y="132" fill="#c9d1d9" xml:space="preserve"> ✓ Starting control-plane 🕹️</text>
+<text x="22" y="152" fill="#c9d1d9" xml:space="preserve"> ✓ Installing CNI 🔌    ✓ Installing StorageClass 💾</text>
+<text x="22" y="172" fill="#8b949e" xml:space="preserve">installing ingress-nginx (controller-v1.12.0)...</text>
+<text x="22" y="192" fill="#8b949e" xml:space="preserve">waiting for the ingress controller (and its admission webhook)...</text>
+<text x="22" y="212" fill="#c9d1d9" xml:space="preserve">pod/ingress-nginx-controller-7f4d9c8b6d-2mzxq condition met</text>
+<text x="22" y="232" fill="#8b949e" xml:space="preserve">docker build --build-arg VERSION=dev -t hello-k8s:dev ./app</text>
+<text x="22" y="252" fill="#8b949e" xml:space="preserve">kind load docker-image hello-k8s:dev --name hello-k8s</text>
+<text x="22" y="272" fill="#c9d1d9" xml:space="preserve">Image: &quot;hello-k8s:dev&quot; loaded on all nodes.</text>
+<text x="22" y="292" fill="#8b949e" xml:space="preserve">kubectl apply -k deploy/overlays/dev</text>
+<text x="22" y="312" fill="#7ee787" xml:space="preserve">namespace/hello-dev created     service/hello-k8s created</text>
+<text x="22" y="332" fill="#7ee787" xml:space="preserve">deployment.apps/hello-k8s created   ingress.networking.k8s.io/hello-k8s created</text>
+<text x="22" y="352" fill="#7ee787" xml:space="preserve">deployment &quot;hello-k8s&quot; successfully rolled out</text>
+<text x="22" y="372" fill="#e3b341" xml:space="preserve">hello-k8s is up. Try:  make demo</text>
+<text x="22" y="412" fill="#7ee787" xml:space="preserve">$ make demo</text>
+<text x="22" y="432" fill="#79c0ff" xml:space="preserve">GET http://localhost/version</text>
+<text x="22" y="452" fill="#c9d1d9" xml:space="preserve">{ &quot;app&quot;: &quot;hello-k8s&quot;, &quot;namespace&quot;: &quot;hello-dev&quot;,</text>
+<text x="22" y="472" fill="#c9d1d9" xml:space="preserve">  &quot;node&quot;: &quot;hello-k8s-worker2&quot;,</text>
+<text x="22" y="492" fill="#c9d1d9" xml:space="preserve">  &quot;pod&quot;: &quot;hello-k8s-7b44dd86dc-xrvsc&quot;, &quot;version&quot;: &quot;dev&quot; }</text>
+<text x="22" y="512" fill="#79c0ff" xml:space="preserve">GET http://localhost/  (x3 — watch the count increment)</text>
+<text x="22" y="532" fill="#c9d1d9" xml:space="preserve">  &quot;count&quot;: 1,  &quot;message&quot;: &quot;Hello from Kubernetes 👋&quot;</text>
+<text x="22" y="552" fill="#c9d1d9" xml:space="preserve">  &quot;count&quot;: 2,  &quot;message&quot;: &quot;Hello from Kubernetes 👋&quot;</text>
+<text x="22" y="572" fill="#c9d1d9" xml:space="preserve">  &quot;count&quot;: 3,  &quot;message&quot;: &quot;Hello from Kubernetes 👋&quot;</text>
+<text x="22" y="612" fill="#7ee787" xml:space="preserve">$ make status</text>
+<text x="22" y="632" fill="#79c0ff" xml:space="preserve">NAME                        READY  UP-TO-DATE  AVAILABLE  AGE</text>
+<text x="22" y="652" fill="#c9d1d9" xml:space="preserve">deployment.apps/hello-k8s   1/1    1           1          9m</text>
+<text x="22" y="672" fill="#79c0ff" xml:space="preserve">NAME                            READY  STATUS   RESTARTS  AGE</text>
+<text x="22" y="692" fill="#c9d1d9" xml:space="preserve">pod/hello-k8s-7b44dd86dc-xrvsc  1/1    Running  0         9m</text>
+<text x="22" y="712" fill="#79c0ff" xml:space="preserve">NAME                                  CLASS  HOSTS      PORTS  AGE</text>
+<text x="22" y="732" fill="#c9d1d9" xml:space="preserve">ingress.../hello-k8s                  nginx  localhost  80     9s</text>
+</svg>

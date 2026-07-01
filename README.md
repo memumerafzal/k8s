@@ -14,6 +14,14 @@ make demo    # curl the app through the Ingress
 make down    # tear it all down
 ```
 
+## Demo
+
+<p align="center">
+  <img src="docs/demo.svg" alt="hello-k8s: make up, make demo and make status running against a local kind cluster" width="820">
+</p>
+
+> `make up` stands up a 3-node kind cluster, installs ingress-nginx, builds + loads the image and deploys the dev overlay. `make demo` then hits the service through the Ingress on `localhost` — note the real pod name/node from the downward API and the request counter incrementing.
+
 ---
 
 ## Architecture
