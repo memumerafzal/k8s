@@ -8,3 +8,6 @@ app/hello-k8s
 .idea/
 .vscode/
 kubeconfig
+
+# compiled Go binary from `go build` in ./app
+/app/app
